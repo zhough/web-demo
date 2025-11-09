@@ -162,19 +162,46 @@ const handleKeyDown = (e) => {
   }
 }
 
-// 添加消息到历史（格式化）
-const addMessage = (content, isUser = false, imageUrl = '') => {
-  messages.value.push({
-    content: DOMPurify.sanitize(marked.parse(content)),
-    isUser,
-    imageUrl,
-    time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
-  })
+// 新增：统一滚动到底部函数（修复滚动问题）
+const scrollToBottom = () => {
   nextTick(() => {
     if (chatContainer.value) {
       chatContainer.value.scrollTop = chatContainer.value.scrollHeight
     }
   })
+}
+
+// 添加消息到历史（格式化，trim尾部换行）
+const addMessage = (content, isUser = false, imageUrl = '') => {
+  // 强制预处理文本：合并所有多空行（标题/列表间），移除标题前后/列表间多\n
+  let preprocessedContent = content
+    .trim()
+    .replace(/\n{3,}/g, '\n\n') // 3+空行 → 双空行（段落分隔）
+    .replace(/\n{2,}/g, '\n') // 进一步：双空行 → 单空行（强制紧凑，移除标题/列表间空行）
+    .replace(/^\n+|\n+$/g, '') // 移除首尾\n
+
+  // 额外：针对标题后强制无空行（e.g., "请告诉我：\n\n1." → "请告诉我：1."）
+  preprocessedContent = preprocessedContent.replace(/([#]{1,6}\s+.*?\n)\n+/g, '$1') // 标题后\n+ → 无
+  preprocessedContent = preprocessedContent.replace(/(\d+\.\s+.*?\n)\n+/g, '$1') // 编号列表后\n+ → 无（列表间紧凑）
+
+  let parsedContent = marked.parse(preprocessedContent)
+  // Post-process: 移除多余<br>，标题/列表后<br>，空p，并强制unwrap所有<p>（直接文本，无段落margin）
+  parsedContent = parsedContent.replace(/<br\s*\/?>\s*<br\s*\/?>/g, '<br>') // 合并连续<br>
+  parsedContent = parsedContent.replace(/<\/(h[1-6])>\s*<br\s*\/?>/gi, '</$1>') // 移除标题后<br>
+  parsedContent = parsedContent.replace(/<\/(ul|ol)>\s*<br\s*\/?>/gi, '</$1>') // 移除列表后<br>
+  parsedContent = parsedContent.replace(/<p>\s*<\/p>/g, '') // 移除空段落
+  parsedContent = parsedContent.replace(/<li>\s*<p>(.*?)<\/p>\s*<\/li>/gi, '<li>$1</li>') // Unwrap li内p
+  // 新增：强制unwrap所有顶级/非li内<p>，转为纯文本（消除所有段落换行/间距）
+  parsedContent = parsedContent.replace(/<p>(.*?)<\/p>/gi, '$1<br>') // <p>内容</p> → 内容<br>（保留单br分段，但无margin）
+  // 对于列表间/标题后，已由预处理移除额外br
+
+  messages.value.push({
+    content: DOMPurify.sanitize(parsedContent),
+    isUser,
+    imageUrl,
+    time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+  })
+  scrollToBottom() // 统一滚动
 }
 
 // SSE 流式（保持逻辑）
@@ -214,18 +241,44 @@ const startSSE = async () => {
         if (line.startsWith('data: ')) {
           const data = line.slice(6)
           if (data !== '[DONE]') {
-            formattedStreamContent.value = DOMPurify.sanitize(marked.parse(fullContent))
+            let preprocessed = fullContent
+              .trim()
+              .replace(/\n{3,}/g, '\n\n')
+              .replace(/\n{2,}/g, '\n')
+              .replace(/^\n+|\n+$/g, '')
+              .replace(/([#]{1,6}\s+.*?\n)\n+/g, '$1')
+              .replace(/(\d+\.\s+.*?\n)\n+/g, '$1')
+
+            let parsed = marked.parse(preprocessed)
+            parsed = parsed.replace(/<br\s*\/?>\s*<br\s*\/?>/g, '<br>')
+            parsed = parsed.replace(/<\/(h[1-6])>\s*<br\s*\/?>/gi, '</$1>')
+            parsed = parsed.replace(/<\/(ul|ol)>\s*<br\s*\/?>/gi, '</$1>')
+            parsed = parsed.replace(/<p>\s*<\/p>/g, '')
+            parsed = parsed.replace(/<li>\s*<p>(.*?)<\/p>\s*<\/li>/gi, '<li>$1</li>')
+            parsed = parsed.replace(/<p>(.*?)<\/p>/gi, '$1<br>') // 强制unwrap p
+            formattedStreamContent.value = DOMPurify.sanitize(parsed)
           }
         } else if (line.trim() && !line.startsWith(':')) {
-          formattedStreamContent.value = DOMPurify.sanitize(marked.parse(fullContent))
+          let preprocessed = fullContent
+            .trim()
+            .replace(/\n{3,}/g, '\n\n')
+            .replace(/\n{2,}/g, '\n')
+            .replace(/^\n+|\n+$/g, '')
+            .replace(/([#]{1,6}\s+.*?\n)\n+/g, '$1')
+            .replace(/(\d+\.\s+.*?\n)\n+/g, '$1')
+
+          let parsed = marked.parse(preprocessed)
+          parsed = parsed.replace(/<br\s*\/?>\s*<br\s*\/?>/g, '<br>')
+          parsed = parsed.replace(/<\/(h[1-6])>\s*<br\s*\/?>/gi, '</$1>')
+          parsed = parsed.replace(/<\/(ul|ol)>\s*<br\s*\/?>/gi, '</$1>')
+          parsed = parsed.replace(/<p>\s*<\/p>/g, '')
+          parsed = parsed.replace(/<li>\s*<p>(.*?)<\/p>\s*<\/li>/gi, '<li>$1</li>')
+          parsed = parsed.replace(/<p>(.*?)<\/p>/gi, '$1<br>') // 强制unwrap p
+          formattedStreamContent.value = DOMPurify.sanitize(parsed)
         }
       }
 
-      nextTick(() => {
-        if (aiBubble.value) {
-          aiBubble.value.scrollIntoView({ behavior: 'smooth' })
-        }
-      })
+      scrollToBottom() // 统一滚动
       await new Promise(resolve => setTimeout(resolve, 50))
     }
 
@@ -239,6 +292,7 @@ const startSSE = async () => {
     userQuery.value = ''
     imageBase64.value = null
     imagePreview.value = ''
+    scrollToBottom()
   }
 }
 
@@ -269,13 +323,23 @@ const startWebSocket = () => {
   ws.onmessage = (event) => {
     const chunk = event.data
     streamChunks.value.push(chunk)
-    const newContent = formattedStreamContent.value + chunk
-    formattedStreamContent.value = DOMPurify.sanitize(marked.parse(newContent))
-    nextTick(() => {
-      if (aiBubble.value) {
-        aiBubble.value.scrollIntoView({ behavior: 'smooth' })
-      }
-    })
+    let newContent = (formattedStreamContent.value + chunk)
+      .trim()
+      .replace(/\n{3,}/g, '\n\n')
+      .replace(/\n{2,}/g, '\n')
+      .replace(/^\n+|\n+$/g, '')
+      .replace(/([#]{1,6}\s+.*?\n)\n+/g, '$1')
+      .replace(/(\d+\.\s+.*?\n)\n+/g, '$1') // 预处理累积内容
+
+    let parsed = marked.parse(newContent)
+    parsed = parsed.replace(/<br\s*\/?>\s*<br\s*\/?>/g, '<br>')
+    parsed = parsed.replace(/<\/(h[1-6])>\s*<br\s*\/?>/gi, '</$1>')
+    parsed = parsed.replace(/<\/(ul|ol)>\s*<br\s*\/?>/gi, '</$1>')
+    parsed = parsed.replace(/<p>\s*<\/p>/g, '')
+    parsed = parsed.replace(/<li>\s*<p>(.*?)<\/p>\s*<\/li>/gi, '<li>$1</li>')
+    parsed = parsed.replace(/<p>(.*?)<\/p>/gi, '$1<br>') // 强制unwrap p
+    formattedStreamContent.value = DOMPurify.sanitize(parsed)
+    scrollToBottom() // 统一滚动
     console.log('WebSocket chunk：', chunk)
   }
 
@@ -295,6 +359,7 @@ const startWebSocket = () => {
     userQuery.value = ''
     imageBase64.value = null
     imagePreview.value = ''
+    scrollToBottom()
   }
 }
 
@@ -335,6 +400,7 @@ body {
   box-shadow: 0 2px 12px rgba(0,0,0,0.04);
   display: flex;
   flex-direction: column;
+  scroll-behavior: auto; /* 新增：即时滚动 */
 }
 .history-container::-webkit-scrollbar {
   width: 6px;
@@ -401,7 +467,7 @@ body {
   word-wrap: break-word;
   font-size: 15px;
   white-space: pre-wrap;
-  line-height: 1.5;
+  line-height: 1.1; /* 极致紧凑行高，强制无视觉换行 */
   color: #374151;
 }
 .user-message .message-content {
@@ -412,32 +478,85 @@ body {
   background: #f8fafc;
   color: #374151;
 }
-/* Markdown内容样式 */
-.message-content h1, .message-content h2, .message-content h3 {
+
+/* 核心优化：所有元素零间距，强制紧凑 */
+.message-content * {
+  margin: 0 !important;
+  padding: 0 !important;
+  line-height: 1.1 !important; /* 统一极致紧凑 */
+}
+.message-content h1, 
+.message-content h2, 
+.message-content h3,
+.message-content h4,
+.message-content h5,
+.message-content h6,
+.message-content p,
+.message-content ol, 
+.message-content ul {
   color: inherit;
-  margin: 8px 0 4px 0;
-  font-size: 1rem;
+  margin: 0 !important;
+  padding: 0 !important;
+  font-size: inherit;
   font-weight: 600;
+  line-height: 1.1 !important;
 }
-.message-content strong {
-  font-weight: 600;
+/* 标题层级微调，无间距 */
+.message-content h1 { font-size: 1.05rem; }
+.message-content h2 { font-size: 1rem; }
+.message-content h3 { font-size: 0.95rem; }
+.message-content h4 { font-size: 0.95rem; font-weight: 600; }
+.message-content h5, .message-content h6 { font-size: 0.9rem; }
+
+/* 段落/文本：已unwrap，无需额外 */
+.message-content br {
+  display: inline; /* 保留单br作为唯一分隔，无多行 */
+  line-height: 1.1;
 }
-.message-content ol, .message-content ul {
-  padding-left: 1.25rem;
-  margin: 4px 0;
+
+/* 列表：极致紧凑，li仅微底距 */
+.message-content ol, 
+.message-content ul {
+  padding-left: 1rem;
+  margin: 0 !important;
+  line-height: 1.1;
 }
 .message-content li {
-  margin: 2px 0;
+  margin: 0 !important;
+  padding: 0 0 0.0625em 0 !important; /* 极小底距（1px） */
+  line-height: 1.1;
 }
+.message-content li > * {
+  margin: 0 !important;
+  padding: 0 !important;
+  line-height: 1.1 !important;
+}
+/* 嵌套列表 */
+.message-content ul ul,
+.message-content ol ul,
+.message-content ul ol,
+.message-content ol ol {
+  margin: 0 !important;
+  padding-left: 1rem;
+}
+
+/* 表格紧凑 */
 .message-content table {
   width: 100%;
   border-collapse: collapse;
-  margin: 8px 0;
+  margin: 0 !important;
 }
 .message-content td {
-  padding: 6px 8px;
+  padding: 1px 4px !important; /* 最小padding */
   border: 1px solid #e2e8f0;
 }
+
+/* 最后一个元素绝对无距 */
+.message-content :last-child {
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
+}
+
 /* 消息附加元素样式 */
 .message-image {
   margin-top: 10px;
@@ -516,7 +635,7 @@ h1 {
 }
 .image-preview {
   max-width: 100%;
-  max-height: 150px;
+  max-height: 120px; /* 缩小预览图高度，更紧凑 */
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
@@ -527,7 +646,7 @@ textarea {
   border: 1px solid #d1d5db;
   border-radius: 12px;
   resize: vertical;
-  min-height: 100px;
+  min-height: 80px; /* 缩小输入框最小高度 */
   font-size: 15px;
   line-height: 1.5;
   transition: border-color 0.2s;
