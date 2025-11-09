@@ -13,6 +13,7 @@
     "axios": "^1.13.2",
     "dompurify": "^3.3.0",
     "marked": "^17.0.0",
+    "pinia": "^3.0.4",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.17",
     "vue": "^3.5.22",

@@ -69,7 +69,7 @@ app.use((req, res, next) => {
 });
 
 server.on('listening', () => {
-  console.log('=== 单一入口 8000 启动（生产静态 + WS） ===');
+  console.log('=== 单一入口 8000 启动 ===');
   console.log('外部访问: http://你的IP:8000/');
   console.log('测试 WS: wscat -c ws://localhost:8000/api/ws');
 });

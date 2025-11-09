@@ -103,7 +103,9 @@
 import { ref, onUnmounted, nextTick } from 'vue'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
+import { useUserStore } from '@/stores/user'
 
+const userStore = useUserStore()
 const userQuery = ref('皮肤红肿，请诊断')
 const imageBase64 = ref(null)
 const imagePreview = ref('')
@@ -218,7 +220,7 @@ const startSSE = async () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         user_query: userQuery.value,
-        ID: 'vue-test',
+        ID: userStore.userId,
         image_base64: imageBase64.value
       })
     })

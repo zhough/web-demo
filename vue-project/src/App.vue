@@ -5,7 +5,12 @@
 </template>
 
 <script setup>
-// 根组件空（路由接管）
+  import { useUserStore } from '@/stores/user'
+  import { onMounted } from 'vue'
+  const userStore = useUserStore()
+  onMounted(() => {
+    userStore.initUserId()
+  })
 </script>
 
 <style>
