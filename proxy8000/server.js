@@ -47,12 +47,21 @@ app.use('/api/service1', createProxyMiddleware({
   timeout: 300000
 }));
 
-// 可选 /api/service2（保持注释）
+
 
 app.use('/api/service2', createProxyMiddleware({
   target: 'http://localhost:5001',
   changeOrigin: true,
-  pathRewrite: { '^/api/service2': '' }
+  pathRewrite: { '^/api/service2': '' },
+  onProxyReq: (proxyReq) => proxyReq.setHeader('Connection', 'keep-alive'),
+  onProxyRes: (proxyRes) => {
+    if (proxyRes.headers['content-type']?.includes('text/event-stream')) {
+      proxyRes.headers['cache-control'] = 'no-cache';
+      proxyRes.headers['connection'] = 'keep-alive';
+    }
+  },
+  proxyTimeout: 300000,
+  timeout: 300000
 }));
 
 
