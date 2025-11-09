@@ -69,7 +69,7 @@ app.use('/api/service2', createProxyMiddleware({
 app.use(express.static(path.join(__dirname, '../vue-project/dist')));  // 服务 dist
 
 // 【修复】SPA 路由兜底（用 /* 语法，避免 PathError）
-app.get('/*', (req, res) => {
+app.use('*', (req, res) => {
   if (!req.path.startsWith('/api/')) {
     res.sendFile(path.join(__dirname, '../vue-project/dist/index.html'));
   } else {
