@@ -1,18 +1,17 @@
-﻿// 
-const express = require('express');
+﻿const express = require('express');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 const httpProxy = require('http-proxy');
-const path = require('path');  // 移到顶部
+const path = require('path');
 
 const app = express();
-const server = app.listen(8000, '0.0.0.0');  // 用 server 监听，便于 WS 升级
-const proxy = httpProxy.createProxyServer({});  // 底层代理
+const server = app.listen(8000, '0.0.0.0');
+const proxy = httpProxy.createProxyServer({});
 
-// 【关键】先处理 WS（最高优先级，避免劫持）
+// WS 升级处理（保持不变）
 server.on('upgrade', (req, socket, head) => {
-  console.log('[代理 8000] WS 升级事件收到:', req.url);  // 日志所有 WS 请求
+  console.log('[代理 8000] WS 升级事件收到:', req.url);
   if (req.url.startsWith('/api/ws')) {
-    req.url = req.url.replace('/api/ws', '/ws');  // 重写路径
+    req.url = req.url.replace('/api/ws', '/ws');
     console.log('[代理 8000] WS 路径重写 → /ws');
    
     proxy.ws(req, socket, head, {
@@ -27,20 +26,12 @@ server.on('upgrade', (req, socket, head) => {
       }
     });
   } else {
-    // 生产模式下不需要 Vite HMR，注释掉或删除
-    // proxy.ws(req, socket, head, {
-    //   target: 'http://localhost:5002',
-    //   changeOrigin: true
-    // }, (err) => {
-    //   if (err) console.error('[代理 8000] HMR WS 失败:', err);
-    //   else console.log('[代理 8000] HMR WS 成功');
-    // });
     console.log('[代理 8000] 忽略非 /api/ws 的 WS 请求（生产模式）');
-    socket.destroy();  // 直接关闭非业务 WS
+    socket.destroy();  // 关闭非业务 WS
   }
 });
 
-// API + SSE：/api/service1 → Python 5000
+// API + SSE：/api/service1 → Python 5000（保持不变）
 app.use('/api/service1', createProxyMiddleware({
   target: 'http://localhost:5000',
   changeOrigin: true,
@@ -56,7 +47,7 @@ app.use('/api/service1', createProxyMiddleware({
   timeout: 300000
 }));
 
-// 可选：/api/service2 → 5001（保持注释）
+// 可选 /api/service2（保持注释）
 /*
 app.use('/api/service2', createProxyMiddleware({
   target: 'http://localhost:5001',
@@ -65,11 +56,11 @@ app.use('/api/service2', createProxyMiddleware({
 }));
 */
 
-// 【优化】生产静态服务（在兜底前）
-app.use(express.static(path.join(__dirname, '../vue-project/dist')));  // 服务 dist
+// 生产静态服务（文件优先匹配）
+app.use(express.static(path.join(__dirname, '../vue-project/dist')));
 
-// 【修复】SPA 路由兜底（用 /* 语法，避免 PathError）
-app.use('*', (req, res) => {
+// 【修复】SPA 兜底（无路径 app.use，避开 path-to-regexp）
+app.use((req, res, next) => {
   if (!req.path.startsWith('/api/')) {
     res.sendFile(path.join(__dirname, '../vue-project/dist/index.html'));
   } else {
