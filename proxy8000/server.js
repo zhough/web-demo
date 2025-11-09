@@ -1,14 +1,17 @@
 ﻿const express = require('express');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 const httpProxy = require('http-proxy');
+const path = require('path');  // 【优化】移到顶部
+
 const app = express();
-const server = app.listen(8000, '0.0.0.0'); // 【新增】用 server 监听，便于 WS 升级
-const proxy = httpProxy.createProxyServer({}); // 底层代理
+const server = app.listen(8000, '0.0.0.0');  // 用 server 监听，便于 WS 升级
+const proxy = httpProxy.createProxyServer({});  // 底层代理
+
 // 【关键】先处理 WS（最高优先级，避免劫持）
 server.on('upgrade', (req, socket, head) => {
-  console.log('[代理 8000] WS 升级事件收到:', req.url); // 日志所有 WS 请求
+  console.log('[代理 8000] WS 升级事件收到:', req.url);  // 日志所有 WS 请求
   if (req.url.startsWith('/api/ws')) {
-    req.url = req.url.replace('/api/ws', '/ws'); // 重写路径
+    req.url = req.url.replace('/api/ws', '/ws');  // 重写路径
     console.log('[代理 8000] WS 路径重写 → /ws');
    
     proxy.ws(req, socket, head, {
@@ -23,7 +26,7 @@ server.on('upgrade', (req, socket, head) => {
       }
     });
   } else {
-    // 其他 WS（如 Vite HMR）转发到 5002
+    // 其他 WS（如 Vite HMR）转发到 5002（生产可选移除，如果不跑 5002）
     proxy.ws(req, socket, head, {
       target: 'http://localhost:5002',
       changeOrigin: true
@@ -33,6 +36,7 @@ server.on('upgrade', (req, socket, head) => {
     });
   }
 });
+
 // API + SSE：/api/service1 → Python 5000
 app.use('/api/service1', createProxyMiddleware({
   target: 'http://localhost:5000',
@@ -48,22 +52,31 @@ app.use('/api/service1', createProxyMiddleware({
   proxyTimeout: 300000,
   timeout: 300000
 }));
-// 可选：/api/service2 → 5001
+
+// 可选：/api/service2 → 5001（保持注释）
+/*
 app.use('/api/service2', createProxyMiddleware({
   target: 'http://localhost:5001',
   changeOrigin: true,
   pathRewrite: { '^/api/service2': '' }
 }));
-// 所有其他 HTTP 路径 → Vue 5002（WS 已单独处理）
-app.use('/', createProxyMiddleware({
-  target: 'http://localhost:5002',
-  changeOrigin: true,
-  ws: false, // 【关键】WS 已用 server.on('upgrade') 处理
-  pathRewrite: (path) => path.includes('@vite') || path.includes('__vite') ? path : path,
-  proxyTimeout: 0,
-  timeout: 0
-}));
+*/
+
+// 【优化】生产静态服务（在兜底前）
+app.use(express.static(path.join(__dirname, '../vue-project/dist')));  // 服务 dist
+
+// 【优化】SPA 路由兜底（排除 /api）
+app.get('*', (req, res) => {
+  if (!req.path.startsWith('/api/')) {
+    res.sendFile(path.join(__dirname, '../vue-project/dist/index.html'));
+  } else {
+    res.status(404).send('API Not Found');
+  }
+});
+
+// 【优化】移除开发代理 app.use('/', proxy to 5002)（生产无需）
+
 server.on('listening', () => {
-  //console.log('=== 单一入口 8000 启动（WS server.on('upgrade') 修复） ===');
+  console.log('=== 单一入口 8000 启动（生产静态 + WS） ===');
   console.log('测试 WS: wscat -c ws://localhost:8000/api/ws');
 });
