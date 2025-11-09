@@ -1,0 +1,40 @@
+# Node.js / pnpm
+node_modules/
+pnpm-lock.yaml
+.npmrc
+.env
+*.log
+dist/
+build/
+
+# Vue 项目
+vue-project/node_modules/
+vue-project/dist/
+vue-project/.vite/
+
+# 代理项目
+proxy8000/node_modules/
+proxy8000/*.log
+
+# Python Agent
+python-agent/__pycache__/
+python-agent/*.pyc
+python-agent/.env
+python-agent/logs/
+
+# 虚拟环境
+python-env/
+venv/
+
+# Windows 特定
+start.ps1
+.DS_Store
+Thumbs.db
+
+# 其他
+backend5001/node_modules/  # 如果有
+*.swp
+.vscode/
+
+./backend5001/
+./backend5000/
