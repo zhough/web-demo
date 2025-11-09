@@ -104,20 +104,21 @@ const loadingHistory = ref(true)
 const errorHistory = ref('')
 
 // FastAPI基URL
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+//const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
 
 // API: 获取用户信息（使用全局userId）
+const body = new URLSearchParams();
+body.append('user_id', userStore.userId);
 const fetchUserInfo = async () => {
   loadingUser.value = true
   errorUser.value = ''
   try {
-    const response = await fetch(`${API_BASE}/api/user/info`, {
+    const response = await fetch('/api/service1/query', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+        'Content-Type': 'application/x-www-form-urlencoded'
       },
-      body: JSON.stringify({ user_id: userStore.userId }) // 发送全局ID
+      body: body
     })
     
     if (!response.ok) {

@@ -48,13 +48,13 @@ app.use('/api/service1', createProxyMiddleware({
 }));
 
 // 可选 /api/service2（保持注释）
-/*
+
 app.use('/api/service2', createProxyMiddleware({
   target: 'http://localhost:5001',
   changeOrigin: true,
   pathRewrite: { '^/api/service2': '' }
 }));
-*/
+
 
 // 生产静态服务（文件优先匹配）
 app.use(express.static(path.join(__dirname, '../vue-project/dist')));
