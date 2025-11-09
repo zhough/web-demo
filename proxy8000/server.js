@@ -1,7 +1,8 @@
-﻿const express = require('express');
+﻿// 
+const express = require('express');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 const httpProxy = require('http-proxy');
-const path = require('path');  // 【优化】移到顶部
+const path = require('path');  // 移到顶部
 
 const app = express();
 const server = app.listen(8000, '0.0.0.0');  // 用 server 监听，便于 WS 升级
@@ -26,14 +27,16 @@ server.on('upgrade', (req, socket, head) => {
       }
     });
   } else {
-    // 其他 WS（如 Vite HMR）转发到 5002（生产可选移除，如果不跑 5002）
-    proxy.ws(req, socket, head, {
-      target: 'http://localhost:5002',
-      changeOrigin: true
-    }, (err) => {
-      if (err) console.error('[代理 8000] HMR WS 失败:', err);
-      else console.log('[代理 8000] HMR WS 成功');
-    });
+    // 生产模式下不需要 Vite HMR，注释掉或删除
+    // proxy.ws(req, socket, head, {
+    //   target: 'http://localhost:5002',
+    //   changeOrigin: true
+    // }, (err) => {
+    //   if (err) console.error('[代理 8000] HMR WS 失败:', err);
+    //   else console.log('[代理 8000] HMR WS 成功');
+    // });
+    console.log('[代理 8000] 忽略非 /api/ws 的 WS 请求（生产模式）');
+    socket.destroy();  // 直接关闭非业务 WS
   }
 });
 
@@ -65,8 +68,8 @@ app.use('/api/service2', createProxyMiddleware({
 // 【优化】生产静态服务（在兜底前）
 app.use(express.static(path.join(__dirname, '../vue-project/dist')));  // 服务 dist
 
-// 【优化】SPA 路由兜底（排除 /api）
-app.get('*', (req, res) => {
+// 【修复】SPA 路由兜底（用 /* 语法，避免 PathError）
+app.get('/*', (req, res) => {
   if (!req.path.startsWith('/api/')) {
     res.sendFile(path.join(__dirname, '../vue-project/dist/index.html'));
   } else {
@@ -74,9 +77,8 @@ app.get('*', (req, res) => {
   }
 });
 
-// 【优化】移除开发代理 app.use('/', proxy to 5002)（生产无需）
-
 server.on('listening', () => {
   console.log('=== 单一入口 8000 启动（生产静态 + WS） ===');
+  console.log('外部访问: http://你的IP:8000/');
   console.log('测试 WS: wscat -c ws://localhost:8000/api/ws');
 });
