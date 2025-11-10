@@ -82,7 +82,9 @@
             </div>
           </div>
         </section>
-
+        <div class="action-buttons">
+          <button @click="$router.push('/')" class="back-btn">返回主页</button>
+        </div>
         <div class="footer-note">
           <p>我们致力于持续创新，让皮肤健康触手可及。欢迎反馈建议！</p>
         </div>
@@ -95,7 +97,7 @@
 import { onMounted } from 'vue'
 
 onMounted(() => {
-  // 可选：添加滚动动画或交互效果
+  
   console.log('功能3页面加载完成')
 })
 </script>
@@ -109,6 +111,26 @@ onMounted(() => {
   justify-content: center;
   padding: 20px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  margin: 30px auto; /* 上下间距，水平居中 */
+  flex-wrap: wrap;
+  position: sticky; /* 粘性定位 */
+  bottom: 20px; /* 距离底部20px */
+  z-index: 10; /* 防止被其他元素遮挡 */
+}
+
+.back-btn, .logout-btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.3s ease;
 }
 
 .hero-section {

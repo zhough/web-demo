@@ -66,9 +66,11 @@ app.use('/api/service2', createProxyMiddleware({
 
 
 // 生产静态服务（文件优先匹配）
-app.use(express.static(path.join(__dirname, '../vue-project/dist')));
+app.use('/server-images', express.static(
+  path.join(__dirname, '../../agent-system'),
+  { maxAge: '30d' }
+));
 
-// 【修复】SPA 兜底（无路径 app.use，避开 path-to-regexp）
 app.use((req, res, next) => {
   if (!req.path.startsWith('/api/')) {
     res.sendFile(path.join(__dirname, '../vue-project/dist/index.html'));

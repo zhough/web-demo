@@ -9,33 +9,7 @@
         <section class="section">
           <h2 class="section-title">个人信息</h2>
           <div class="info-card">
-            <!-- <div v-if="loadingUser" class="loading">加载中...</div>
-            <div v-else-if="errorUser" class="error">错误：{{ errorUser }} <button @click="fetchUserInfo">重试</button></div>
-            <div v-else>
-              <div class="avatar-wrapper">
-                <span class="avatar">👤</span>
-              </div>
-              <div class="info-details">
-                <h3 class="user-name">{{ userInfo.name }}</h3>
-                <p class="user-email">{{ userInfo.email }}</p>
-                <p class="join-date">加入日期：{{ userInfo.joinDate }}</p>
-                <div class="user-id-section">
-                  <p class="user-id-label">用户ID：</p>
-                  <code class="user-id">{{ userStore.userId }}</code>
-                </div>
 
-                <div class="edit-id-section">
-                  <input 
-                    v-model="newUserId" 
-                    type="text" 
-                    placeholder="输入新用户ID"
-                    class="id-input"
-                  />
-                  <button @click="updateUserId" class="save-id-btn" :disabled="!newUserId.trim()">保存新ID</button>
-                </div>
-              </div>
-              <button class="edit-btn" @click="handleEditProfile">编辑资料</button>
-            </div> -->
               <div class="avatar-wrapper">
                 <span class="avatar">👤</span>
               </div>
@@ -83,8 +57,17 @@
                 <span class="status" :class="item.status">{{ item.type }}</span>
               </div>
               <p class="symptom">{{ item.content }}</p>
-              <!-- <p class="diagnosis">{{ item.diagnosis }}</p> -->
+              <!-- <p class="diagnosis">{{ item.content }}</p> -->
               <button class="view-btn" @click="handleViewDetail(item)">查看详情</button>
+            </div>
+            <div 
+              v-for="(item, index) in iamges_path" 
+              :key="index"
+              class="history-card"
+            >
+              <div class="history-header">
+                <p class="diagnosis">{{ item }}</p>
+              </div>
             </div>
           </div>
         </section>
@@ -126,38 +109,7 @@ const errorUser = ref('')
 const diagnosisHistory = ref([])
 const loadingHistory = ref(true)
 const errorHistory = ref('')
-
-// FastAPI基URL
-//const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
-
-
-// const fetchUserInfo = async () => {
-//   loadingUser.value = true
-//   errorUser.value = ''
-//   try {
-//     const response = await fetch('/api/service2/query', {
-//       method: 'POST',
-//       headers: {
-//         'Content-Type': 'application/x-www-form-urlencoded'
-//       },
-//       body: body
-//     })
-    
-//     if (!response.ok) {
-//       throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-//     }
-    
-//     const data = await response.json()
-//     userInfo.value = data
-//     console.log('FastAPI响应 - 用户信息:', data)
-    
-//   } catch (error) {
-//     errorUser.value = error.message
-//     console.error('API失败 - 用户信息:', error)
-//   } finally {
-//     loadingUser.value = false
-//   }
-// }
+const iamges_path = ref([])
 
 // API: 获取诊断历史（使用全局userId）
 const fetchDiagnosisHistory = async () => {
@@ -185,7 +137,7 @@ const fetchDiagnosisHistory = async () => {
       .concat(data.fact || []) // 加 || [] 防止数据为 undefined 报错
       .concat(data.important || [])
       .concat(data.diagnosis || [])
-      .concat(data.path || []);
+    iamges_path.value = data.path;
     console.log('FastAPI响应 - 诊断历史:', data)
     
   } catch (error) {
@@ -229,7 +181,7 @@ const handleViewDetail = (item) => {
 const handleLogout = () => {
   console.log('退出登录，清除userId')
   localStorage.removeItem('token')
-  userStore.setUserId(null) // 重置全局ID
+  userStore.setUserId(null)
 }
 </script>
 
