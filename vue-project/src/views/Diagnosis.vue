@@ -95,6 +95,8 @@
         </button>
       </div>
       <div class="status">{{ streamActive ? 'AI 正在响应...' : '就绪' }}</div>
+      <div class="status">当前ID: {{ userStore.userId }}</div>
+      <div class="status">测试阶段无登录验证页面，初次使用先在主页输入ID</div>
     </div>
   </div>
 </template>

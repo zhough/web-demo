@@ -66,8 +66,10 @@ app.use('/api/service2', createProxyMiddleware({
 
 
 // 生产静态服务（文件优先匹配）
+app.use(express.static(path.join(__dirname, '../vue-project/dist')));
+// 生产静态服务（文件优先匹配）
 app.use('/server-images', express.static(
-  path.join(__dirname, '../../agent-system'),
+  path.join(__dirname, '../../agent-system/images'),
   { maxAge: '30d' }
 ));
 
