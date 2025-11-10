@@ -10,7 +10,7 @@
           <h2 class="section-title">个人信息</h2>
           <div class="info-card">
             <div class="avatar-wrapper">
-              <span class="avatar">🥹</span>
+              <span class="avatar">🤪</span>
             </div>
             <div class="info-details">
               <h3 class="user-name">{{ userInfo.name }}</h3>
@@ -39,10 +39,14 @@
                 </button>
               </div>
             </div>
+
+            <!-- <button class="edit-btn" @click="handleEditProfile">
+              编辑资料
+            </button> -->
           </div>
         </section>
 
-        <!-- 诊断历史（支持部分收起 + 展开按钮） -->
+        <!-- 诊断历史（仅文字记录） -->
         <section class="section">
           <h2 class="section-title">诊断记录</h2>
           <div v-if="loadingHistory" class="loading">加载中...</div>
@@ -62,33 +66,14 @@
               :key="'record-' + idx"
               class="history-card record-card"
             >
-              <!-- 头部：时间 + 类型 -->
               <div class="history-header">
-                <span class="date">{{ formatDate(item.update_timestamp) }}</span>
+                <span class="date">{{ item.update_timestamp }}</span>
                 <span class="status" :class="item.status || 'default'">{{ item.type }}</span>
               </div>
-
-              <!-- 内容：部分显示 + 展开按钮 -->
-              <div class="content-wrapper">
-                <!-- 预览内容 -->
-                <p
-                  class="symptom preview"
-                  :class="{ 'collapsed': needsCollapse(idx) && !expanded[idx] }"
-                >
-                  {{ item.content }}
-                </p>
-
-                <!-- 展开/收起按钮（仅在需要时显示） -->
-                <transition name="fade">
-                  <button
-                    v-if="needsCollapse(idx)"
-                    @click.stop="toggleExpand(idx)"
-                    class="view-btn expand-btn"
-                  >
-                    {{ expanded[idx] ? '收起' : '展开详情' }}
-                  </button>
-                </transition>
-              </div>
+              <p class="symptom">{{ item.content }}</p>
+              <button class="view-btn" @click="handleViewDetail(item)">
+                查看详情
+              </button>
             </div>
           </div>
         </section>
@@ -154,9 +139,6 @@ const diagnosisHistory = ref([])
 const loadingHistory = ref(true)
 const errorHistory = ref('')
 
-// 展开状态
-const expanded = ref({})
-
 // 图片路径
 const rawImagePaths = ref([])
 const imageUrls = computed(() =>
@@ -164,33 +146,10 @@ const imageUrls = computed(() =>
 )
 const imageErrors = ref([])
 
-// 图片灯箱
+// 图片灯箱（可选）
 const lightboxUrl = ref('')
 const openLightbox = (url) => {
   lightboxUrl.value = url
-}
-
-// 是否需要收起（超过 120 字符）
-const MAX_PREVIEW_LENGTH = 120
-const needsCollapse = (idx) => {
-  const content = diagnosisHistory.value[idx]?.content || ''
-  return content.length > MAX_PREVIEW_LENGTH
-}
-
-// 展开/收起
-const toggleExpand = (idx) => {
-  expanded.value[idx] = !expanded.value[idx]
-}
-
-// 格式化时间
-const formatDate = (timestamp) => {
-  if (!timestamp) return '未知时间'
-  try {
-    const date = new Date(timestamp)
-    return date.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' })
-  } catch {
-    return timestamp
-  }
 }
 
 // API
@@ -200,7 +159,6 @@ const fetchDiagnosisHistory = async () => {
   diagnosisHistory.value = []
   rawImagePaths.value = []
   imageErrors.value = []
-  expanded.value = {}
 
   try {
     const body = new URLSearchParams()
@@ -217,11 +175,13 @@ const fetchDiagnosisHistory = async () => {
     const data = await resp.json()
     console.log('FastAPI 返回:', data)
 
+    // 合并诊断记录
     const facts = data.fact || []
     const important = data.important || []
     const diagnosis = data.diagnosis || []
     diagnosisHistory.value = [...facts, ...important, ...diagnosis]
 
+    // 图片路径
     if (Array.isArray(data.path)) {
       rawImagePaths.value = data.path.map(p => 
         typeof p === 'string' ? { url: p, time: '' } : p
@@ -230,6 +190,7 @@ const fetchDiagnosisHistory = async () => {
       rawImagePaths.value = []
     }
 
+    // 初始化错误标记
     imageErrors.value = new Array(rawImagePaths.value.length).fill(false)
   } catch (e) {
     errorHistory.value = e.message
@@ -248,6 +209,8 @@ const updateUserId = () => {
 }
 
 // 其他
+const handleEditProfile = () => console.log('编辑资料')
+const handleViewDetail = item => console.log('查看详情', item)
 const handleLogout = () => {
   localStorage.removeItem('token')
   userStore.setUserId(null)
@@ -282,6 +245,7 @@ onMounted(() => {
 .subtitle   { font-size: 1.2rem; color: rgba(255,255,255,.9); margin-bottom: 50px; animation: slideInUp .6s ease-out .2s both; }
 
 .section { margin-bottom: 60px; animation: fadeInUp .6s ease-out both; }
+.section:nth-child(2) { animation-delay: .3s; }
 .section-title { font-size: 2rem; font-weight: 600; color: #fff; margin-bottom: 30px; text-shadow: 0 1px 5px rgba(0,0,0,.2); }
 
 /* ────────────────────── 个人信息 ────────────────────── */
@@ -309,6 +273,7 @@ onMounted(() => {
 .user-id-label   { color: rgba(255,255,255,.7); font-size: .9rem; }
 .user-id { background: rgba(0,0,0,.2); padding: 4px 8px; border-radius: 4px; font-family: monospace; color: #fff; font-size: .9rem; }
 
+/* 修复：按钮宽度固定，不随输入框拉伸 */
 .edit-id-section {
   margin-top: 15px;
   display: flex;
@@ -328,7 +293,7 @@ onMounted(() => {
 }
 .id-input::placeholder { color: rgba(255,255,255,.5); }
 .save-id-btn {
-  white-space: nowrap;
+  white-space: nowrap; /* 防止文字换行 */
   background: rgba(33,150,243,.8);
   color: #fff;
   border: none;
@@ -341,7 +306,10 @@ onMounted(() => {
 .save-id-btn:hover:not(:disabled) { background: #2196F3; transform: translateY(-1px); }
 .save-id-btn:disabled { opacity: .5; cursor: not-allowed; }
 
-/* ────────────────────── 诊断记录（部分收起） ────────────────────── */
+.edit-btn { background: rgba(76,175,80,.8); color: #fff; border: none; padding: 10px 20px; border-radius: 25px; cursor: pointer; font-size: 1rem; transition: .3s; }
+.edit-btn:hover { background: #4CAF50; transform: translateY(-2px); }
+
+/* ────────────────────── 诊断记录（纯文字） ────────────────────── */
 .history-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -355,65 +323,23 @@ onMounted(() => {
   border: 1px solid rgba(255,255,255,.2);
   box-shadow: 0 4px 20px rgba(0,0,0,.1);
   transition: .3s;
-  display: flex;
-  flex-direction: column;
 }
 .record-card:hover { transform: translateY(-5px); background: rgba(255,255,255,.15); }
 
-.history-header { 
-  display: flex; 
-  justify-content: space-between; 
-  align-items: center; 
-  margin-bottom: 12px; 
-}
+.history-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
 .date { font-size: .9rem; color: rgba(255,255,255,.7); }
 .status { padding: 4px 8px; border-radius: 12px; font-size: .8rem; font-weight: 500; }
 .status.completed { background: rgba(76,175,80,.2); color: #4CAF50; }
 .status.default { background: rgba(255,255,255,.2); color: #fff; }
 
-.content-wrapper {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
+.symptom { font-size: 1rem; color: #fff; margin-bottom: 12px; font-weight: 500; line-height: 1.4; }
+.view-btn {
+  background: transparent; color: rgba(255,255,255,.8); border: 1px solid rgba(255,255,255,.3);
+  padding: 6px 12px; border-radius: 20px; cursor: pointer; font-size: .85rem; transition: .3s; width: 100%;
 }
+.view-btn:hover { background: rgba(255,255,255,.1); color: #fff; border-color: rgba(255,255,255,.5); }
 
-.symptom {
-  font-size: 1rem;
-  color: #fff;
-  margin: 0 0 12px 0;
-  font-weight: 500;
-  line-height: 1.5;
-  word-break: break-word;
-  transition: all .3s ease;
-}
-.symptom.collapsed {
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.expand-btn {
-  align-self: flex-start;
-  background: transparent;
-  color: rgba(255,255,255,.8);
-  border: 1px solid rgba(255,255,255,.3);
-  padding: 6px 12px;
-  border-radius: 20px;
-  cursor: pointer;
-  font-size: .85rem;
-  transition: .3s;
-  width: auto;
-  margin-top: 4px;
-}
-.expand-btn:hover {
-  background: rgba(255,255,255,.1);
-  color: #fff;
-  border-color: rgba(255,255,255,.5);
-}
-
-/* ────────────────────── 图片模块 ────────────────────── */
+/* ────────────────────── 图片模块（独立网格） ────────────────────── */
 .image-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -429,7 +355,7 @@ onMounted(() => {
 .image-card:hover { transform: translateY(-4px); }
 .image-wrapper {
   position: relative;
-  padding-top: 50%;
+  padding-top: 50%; /* 4:3 比例 */
   background: #000;
 }
 .diag-image {
@@ -473,9 +399,6 @@ onMounted(() => {
 @keyframes fadeInUp { from { opacity:0; transform:translateY(30px); } to { opacity:1; transform:translateY(0); } }
 @keyframes slideInDown { from { opacity:0; transform:translateY(-30px); } to { opacity:1; transform:translateY(0); } }
 @keyframes slideInUp { from { opacity:0; transform:translateY(30px); } to { opacity:1; transform:translateY(0); } }
-
-.fade-enter-active, .fade-leave-active { transition: opacity .3s ease; }
-.fade-enter-from, .fade-leave-to { opacity: 0; }
 
 /* 响应式 */
 @media (max-width: 768px) {

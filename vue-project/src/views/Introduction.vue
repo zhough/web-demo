@@ -3,7 +3,8 @@
     <div class="hero-section">
       <div class="content-wrapper">
         <h1 class="main-title">系统功能介绍 & 开发进度</h1>
-        <p class="subtitle">探索我们的AI皮肤诊断系统的核心功能和持续迭代历程</p>
+        <p class="subtitle">基于大语言模型和多模态大模型的皮肤病诊断agent</p>
+        <p class="card-desc">(如果吐字慢大概是有其他人的程序占用服务器)</p>
         
         <!-- 功能介绍部分 -->
         <section class="section">
@@ -11,31 +12,31 @@
           <div class="features-grid">
             <div class="feature-card">
               <div class="icon-wrapper">
-                <span class="icon">🩹</span>
+                <span class="icon">💬</span>
               </div>
               <h3 class="card-title">智能诊断</h3>
-              <p class="card-desc">基于深度学习模型，实时分析皮肤照片，提供专业诊断报告和护理建议。</p>
+              <p class="card-desc">基于deepseek的agent,提供数据库操作和调用多模态大模型的工具，可实现目标拆解，ai自主决策工具调用并根据返回的结果进行回答</p>
             </div>
             <div class="feature-card">
               <div class="icon-wrapper">
                 <span class="icon">📊</span>
               </div>
               <h3 class="card-title">历史追踪</h3>
-              <p class="card-desc">记录您的诊断记录，生成趋势图表，帮助监测皮肤健康变化。</p>
+              <p class="card-desc">通过数据库操作工具记录诊断记录，帮助监测皮肤健康变化。</p>
+            </div>
+            <div class="feature-card">
+              <div class="icon-wrapper">
+                <span class="icon">🧵</span>
+              </div>
+              <h3 class="card-title">多模态工具</h3>
+              <p class="card-desc">多模态模型的推理提供单张或多张图像上传的接口，可以实现图像分析和图像对比，帮助分析皮肤健康变化过程</p>
             </div>
             <div class="feature-card">
               <div class="icon-wrapper">
                 <span class="icon">🛡️</span>
               </div>
-              <h3 class="card-title">隐私保护</h3>
-              <p class="card-desc">端到端加密，所有数据本地存储，确保您的隐私安全无虞。</p>
-            </div>
-            <div class="feature-card">
-              <div class="icon-wrapper">
-                <span class="icon">💬</span>
-              </div>
-              <h3 class="card-title">AI咨询</h3>
-              <p class="card-desc">实时聊天与AI专家互动，解答个性化护肤疑问。</p>
+              <h3 class="card-title">信息安全</h3>
+              <p class="card-desc">登录验证以及用户隔离(测试阶段暂时关闭)</p>
             </div>
           </div>
         </section>
@@ -49,8 +50,12 @@
                 <span class="icon">✅</span>
               </div>
               <div class="timeline-content">
-                <h3 class="timeline-title">v1.0 发布 (2024 Q4)</h3>
-                <p class="timeline-desc">基础诊断模块上线，支持图像上传和初步AI分析。</p>
+                <h3 class="timeline-title">已完成并整合部分</h3>
+                <div class="timeline-desc">
+                  <ul>基础的诊断对话模块，包括各工具</ul>
+                  <ul>主页的个人信息记录，包括诊断记录和图像</ul>
+                  <ul>待定</ul>
+                </div>
               </div>
             </div>
             <div class="timeline-item">
@@ -58,8 +63,11 @@
                 <span class="icon">🔄</span>
               </div>
               <div class="timeline-content">
-                <h3 class="timeline-title">v1.1 开发中 (2025 Q1)</h3>
-                <p class="timeline-desc">集成实时聊天和历史追踪功能，优化移动端体验。</p>
+                <h3 class="timeline-title">已完成但未整合部分</h3>
+                <div class="timeline-desc">
+                  <ul>登录验证部分，为方便测试，暂时关闭</ul>
+                  <ul>前端原本的其他功能，因服务器兼容问题，后续会逐步整合进来</ul>
+                </div>
               </div>
             </div>
             <div class="timeline-item">
@@ -67,8 +75,10 @@
                 <span class="icon">⏳</span>
               </div>
               <div class="timeline-content">
-                <h3 class="timeline-title">v1.2 计划 (2025 Q2)</h3>
-                <p class="timeline-desc">添加多语言支持和社区分享模块，扩展到更多皮肤类型诊断。</p>
+                <h3 class="timeline-title">待实现功能</h3>
+                <div class="timeline-desc">
+                  <ul>数据库保留诊断记录和每日护理计划部分并在主页展示</ul>
+                </div>
               </div>
             </div>
             <div class="timeline-item">
@@ -76,8 +86,10 @@
                 <span class="icon">🚀</span>
               </div>
               <div class="timeline-content">
-                <h3 class="timeline-title">v2.0 愿景 (2025 Q3+)</h3>
-                <p class="timeline-desc">引入AR试用护肤品和与医生协作功能，打造全生态平台。</p>
+                <h3 class="timeline-title">11</h3>
+                <div class="timeline-desc">
+                  <ul>111</ul>
+                </div>
               </div>
             </div>
           </div>
@@ -86,7 +98,7 @@
           <button @click="$router.push('/')" class="back-btn">返回主页</button>
         </div>
         <div class="footer-note">
-          <p>我们致力于持续创新，让皮肤健康触手可及。欢迎反馈建议！</p>
+          <p>更新2025年11月10日22：36</p>
         </div>
       </div>
     </div>
