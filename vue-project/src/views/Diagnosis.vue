@@ -104,7 +104,7 @@
             <div class="status-bar">
               <div class="status">{{ streamActive ? 'AI 正在响应...' : '就绪' }}</div>
               <div class="status">ID: {{ userStore.userId }}</div>
-              <div class="status tip">测试阶段无登录，初次使用请在主页输入ID</div>
+              <div class="status tip">测试阶段无登录验证，初次使用请在主页输入ID</div>
             </div>
           </div>
         </section>
@@ -521,9 +521,23 @@ button:disabled { opacity:.5; cursor:not-allowed; }
 
 /* 状态栏 */
 .status-bar {
-  display: flex; flex-direction: column; gap: 4px; color: rgba(255,255,255,.7); font-size:.85rem; text-align:center;
+  display: flex; 
+  flex-direction: column; 
+  gap: 4px; 
+  color: rgba(228, 206, 206, 0.7); 
+  font-size:.85rem; 
+  text-align:center;
 }
-.status-bar .tip { font-style:italic; }
+.status {
+  color: rgba(255, 255, 255, 0.85) !important; /* 强制高亮白 */
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3); /* 轻微阴影增强可读性 */
+}
+
+/* 提示文字 */
+.status.tip {
+  color: rgba(255, 220, 150, 0.9) !important; /* 柔和高亮黄 */
+  font-style: italic;
+}
 
 /* ────────────────────── 动画 ────────────────────── */
 @keyframes fadeInUp { from {opacity:0;transform:translateY(30px);} to {opacity:1;transform:translateY(0);} }
