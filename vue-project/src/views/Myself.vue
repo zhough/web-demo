@@ -9,9 +9,33 @@
         <section class="section">
           <h2 class="section-title">个人信息</h2>
           <div class="info-card">
-            <div v-if="loadingUser" class="loading">加载中...</div>
+            <!-- <div v-if="loadingUser" class="loading">加载中...</div>
             <div v-else-if="errorUser" class="error">错误：{{ errorUser }} <button @click="fetchUserInfo">重试</button></div>
             <div v-else>
+              <div class="avatar-wrapper">
+                <span class="avatar">👤</span>
+              </div>
+              <div class="info-details">
+                <h3 class="user-name">{{ userInfo.name }}</h3>
+                <p class="user-email">{{ userInfo.email }}</p>
+                <p class="join-date">加入日期：{{ userInfo.joinDate }}</p>
+                <div class="user-id-section">
+                  <p class="user-id-label">用户ID：</p>
+                  <code class="user-id">{{ userStore.userId }}</code>
+                </div>
+
+                <div class="edit-id-section">
+                  <input 
+                    v-model="newUserId" 
+                    type="text" 
+                    placeholder="输入新用户ID"
+                    class="id-input"
+                  />
+                  <button @click="updateUserId" class="save-id-btn" :disabled="!newUserId.trim()">保存新ID</button>
+                </div>
+              </div>
+              <button class="edit-btn" @click="handleEditProfile">编辑资料</button>
+            </div> -->
               <div class="avatar-wrapper">
                 <span class="avatar">👤</span>
               </div>
@@ -31,11 +55,11 @@
                     placeholder="输入新用户ID"
                     class="id-input"
                   />
+
                   <button @click="updateUserId" class="save-id-btn" :disabled="!newUserId.trim()">保存新ID</button>
                 </div>
               </div>
               <button class="edit-btn" @click="handleEditProfile">编辑资料</button>
-            </div>
           </div>
         </section>
 
@@ -55,11 +79,11 @@
               class="history-card"
             >
               <div class="history-header">
-                <span class="date">{{ item.date }}</span>
-                <span class="status" :class="item.status">{{ item.statusText }}</span>
+                <span class="date">{{ item.update_timestamp }}</span>
+                <span class="status" :class="item.status">{{ item.type }}</span>
               </div>
-              <p class="symptom">{{ item.symptom }}</p>
-              <p class="diagnosis">{{ item.diagnosis }}</p>
+              <p class="symptom">{{ item.content }}</p>
+              <!-- <p class="diagnosis">{{ item.diagnosis }}</p> -->
               <button class="view-btn" @click="handleViewDetail(item)">查看详情</button>
             </div>
           </div>
@@ -106,14 +130,44 @@ const errorHistory = ref('')
 // FastAPI基URL
 //const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
 
-// API: 获取用户信息（使用全局userId）
-const body = new URLSearchParams();
-body.append('user_id', userStore.userId);
-const fetchUserInfo = async () => {
-  loadingUser.value = true
-  errorUser.value = ''
+
+// const fetchUserInfo = async () => {
+//   loadingUser.value = true
+//   errorUser.value = ''
+//   try {
+//     const response = await fetch('/api/service2/query', {
+//       method: 'POST',
+//       headers: {
+//         'Content-Type': 'application/x-www-form-urlencoded'
+//       },
+//       body: body
+//     })
+    
+//     if (!response.ok) {
+//       throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+//     }
+    
+//     const data = await response.json()
+//     userInfo.value = data
+//     console.log('FastAPI响应 - 用户信息:', data)
+    
+//   } catch (error) {
+//     errorUser.value = error.message
+//     console.error('API失败 - 用户信息:', error)
+//   } finally {
+//     loadingUser.value = false
+//   }
+// }
+
+// API: 获取诊断历史（使用全局userId）
+const fetchDiagnosisHistory = async () => {
+  loadingHistory.value = true
+  errorHistory.value = ''
   try {
-    const response = await fetch('/api/service1/query', {
+    // API: 获取用户信息（使用全局userId）
+    const body = new URLSearchParams();
+    body.append('user_id', userStore.userId);
+    const response = await fetch('/api/service2/query', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded'
@@ -126,37 +180,12 @@ const fetchUserInfo = async () => {
     }
     
     const data = await response.json()
-    userInfo.value = data
-    console.log('FastAPI响应 - 用户信息:', data)
-    
-  } catch (error) {
-    errorUser.value = error.message
-    console.error('API失败 - 用户信息:', error)
-  } finally {
-    loadingUser.value = false
-  }
-}
-
-// API: 获取诊断历史（使用全局userId）
-const fetchDiagnosisHistory = async () => {
-  loadingHistory.value = true
-  errorHistory.value = ''
-  try {
-    const response = await fetch(`${API_BASE}/api/user/history`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
-      },
-      body: JSON.stringify({ user_id: userStore.userId }) // 发送全局ID
-    })
-    
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-    }
-    
-    const data = await response.json()
-    diagnosisHistory.value = data
+    //diagnosisHistory.value = data.fact
+    diagnosisHistory.value = diagnosisHistory.value
+      .concat(data.fact || []) // 加 || [] 防止数据为 undefined 报错
+      .concat(data.important || [])
+      .concat(data.diagnosis || [])
+      .concat(data.path || []);
     console.log('FastAPI响应 - 诊断历史:', data)
     
   } catch (error) {
@@ -175,7 +204,7 @@ const updateUserId = () => {
     newUserId.value = '' // 清空输入
     console.log('用户ID已更新为:', userStore.userId)
     // 可选：刷新数据
-    fetchUserInfo()
+    //fetchUserInfo()
     fetchDiagnosisHistory()
   }
 }
@@ -183,8 +212,9 @@ const updateUserId = () => {
 // 页面加载时调用API
 onMounted(() => {
   console.log('Myself页面加载，当前userId:', userStore.userId)
-  fetchUserInfo()
+  //fetchUserInfo()
   fetchDiagnosisHistory()
+  userInfo.value.name = userId
 })
 
 // 处理函数
@@ -202,6 +232,8 @@ const handleLogout = () => {
   userStore.setUserId(null) // 重置全局ID
 }
 </script>
+
+
 
 <style scoped>
 .myself-container {

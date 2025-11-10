@@ -106,7 +106,7 @@ import DOMPurify from 'dompurify'
 import { useUserStore } from '@/stores/user'
 
 const userStore = useUserStore()
-const userQuery = ref('皮肤红肿，请诊断')
+const userQuery = ref('')
 const imageBase64 = ref(null)
 const imagePreview = ref('')
 const streamActive = ref(false)
@@ -212,14 +212,15 @@ const startSSE = async () => {
   streamActive.value = true
   formattedStreamContent.value = ''
   const imageUrl = imagePreview.value
-  addMessage(userQuery.value, true, imageUrl)
+  const userContent = imageBase64.value ? `<image>${userQuery.value}` : userQuery.value
+  addMessage(userContent, true, imageUrl)
 
   try {
     const response = await fetch('/api/service1/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        user_query: userQuery.value,
+        user_query: userContent,
         ID: userStore.userId,
         image_base64: imageBase64.value
       })
