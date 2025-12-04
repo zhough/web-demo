@@ -128,7 +128,7 @@
         </div>
 
         <div class="footer-note">
-          <p>您的隐私是我们最重视的承诺</p>
+          <p>诊断报告排版待调整</p>
         </div>
       </div>
     </div>

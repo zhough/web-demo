@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
 export const useUserStore = defineStore('user', () => {
-  const userId = ref('USER_20241109_001') // 初始ID（或从localStorage加载）
+  const userId = ref('示例用户')
 
   const setUserId = (id) => {
     userId.value = id

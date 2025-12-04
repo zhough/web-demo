@@ -105,6 +105,7 @@
               <div class="status">{{ streamActive ? 'AI 正在响应...' : '就绪' }}</div>
               <div class="status">ID: {{ userStore.userId }}</div>
               <div class="status tip">测试阶段无登录验证，初次使用请在主页输入ID</div>
+              <div class="status">（如果对话吐字慢或者卡住大概是因为服务器有其他人在跑别的程序）</div>
             </div>
           </div>
         </section>

@@ -4,7 +4,6 @@
       <div class="content-wrapper">
         <h1 class="main-title">系统功能介绍 & 开发进度</h1>
         <p class="subtitle">基于大语言模型和多模态大模型的皮肤病诊断agent</p>
-        <p class="card-desc">(如果吐字慢大概是有其他人的程序占用服务器)</p>
         
         <!-- 功能介绍部分 -->
         <section class="section">
@@ -15,7 +14,7 @@
                 <span class="icon">💬</span>
               </div>
               <h3 class="card-title">智能诊断</h3>
-              <p class="card-desc">基于deepseek的agent,提供数据库操作和调用多模态大模型的工具，可实现目标拆解，ai自主决策工具调用并根据返回的结果进行回答</p>
+              <p class="card-desc">基于deepseek的agent,后端为llm提供数据库操作和调用多模态大模型的接口，使llm能自主实现目标拆解，自主决策工具调用，根据工具调用结果整合后再进行回答</p>
             </div>
             <div class="feature-card">
               <div class="icon-wrapper">
@@ -65,8 +64,9 @@
               <div class="timeline-content">
                 <h3 class="timeline-title">已完成但未整合部分</h3>
                 <div class="timeline-desc">
-                  <ul>登录验证部分，为方便测试，暂时关闭</ul>
-                  <ul>前端原本的其他功能，因服务器兼容问题，后续会逐步整合进来</ul>
+                  <ul>登录验证部分（已经比较完善），为方便测试暂时关闭，等其他功能都测试好最后再加进来</ul>
+                  <ul>前端原本的其他功能（皮肤病知识和快速检测等），因服务器兼容问题，后续会逐步整合进来</ul>
+                  <ul>基于yolo的湿疹快速检测页面</ul>
                 </div>
               </div>
             </div>
@@ -75,9 +75,10 @@
                 <span class="icon">⏳</span>
               </div>
               <div class="timeline-content">
-                <h3 class="timeline-title">待实现功能</h3>
+                <h3 class="timeline-title">待实现</h3>
                 <div class="timeline-desc">
-                  <ul>数据库保留诊断记录和每日护理计划部分并在主页展示</ul>
+                  <ul>数据库保留诊断记录和每日护理计划部分并在个人主页展示</ul>
+                  <ul>细节方面如前端的排版和主题等</ul>
                 </div>
               </div>
             </div>
@@ -86,9 +87,9 @@
                 <span class="icon">🚀</span>
               </div>
               <div class="timeline-content">
-                <h3 class="timeline-title">11</h3>
+                <h3 class="timeline-title">敬请期待</h3>
                 <div class="timeline-desc">
-                  <ul>111</ul>
+                  <ul>暂无</ul>
                 </div>
               </div>
             </div>
@@ -98,7 +99,9 @@
           <button @click="$router.push('/')" class="back-btn">返回主页</button>
         </div>
         <div class="footer-note">
-          <p>更新2025年11月10日22：36</p>
+          <p>点击按钮返回主页开始体验</p>
+          <p>最后更新时间：2025年11月11日13：00</p>
+
         </div>
       </div>
     </div>
@@ -110,7 +113,7 @@ import { onMounted } from 'vue'
 
 onMounted(() => {
   
-  console.log('功能3页面加载完成')
+  console.log('介绍页加载完成')
 })
 </script>
 
